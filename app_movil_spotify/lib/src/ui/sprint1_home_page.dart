@@ -46,6 +46,8 @@ class Sprint1HomePage extends StatelessWidget {
             const SizedBox(height: 16),
             _TrackMetadataCard(controller: controller),
             const SizedBox(height: 16),
+            _PlayerControlsCard(controller: controller),
+            const SizedBox(height: 16),
             const _FooterCard(),
           ],
         ),
@@ -416,6 +418,64 @@ class _FooterCard extends StatelessWidget {
         child: Text(
           'Sprint 1 listo para evolucionar hacia autenticación real con Spotify SDK y búsqueda Web API.',
           style: Theme.of(context).textTheme.bodyMedium,
+        ),
+      ),
+    );
+  }
+}
+
+class _PlayerControlsCard extends StatelessWidget {
+  final Sprint1Controller controller;
+
+  const _PlayerControlsCard({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Controles de reproducción',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                ElevatedButton.icon(
+                  key: const ValueKey<String>('playback-toggle-button'),
+                  onPressed: controller.togglePlayback,
+                  icon: Icon(
+                    controller.isPlaying
+                        ? Icons.pause_circle_outline
+                        : Icons.play_circle_outline,
+                  ),
+                  label: Text(controller.isPlaying ? 'Pausar' : 'Reproducir'),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    '${controller.playbackPositionLabel} / ${controller.playbackDurationLabel}',
+                    key: const ValueKey<String>('playback-time-label'),
+                    style: Theme.of(context).textTheme.bodySmall,
+                    textAlign: TextAlign.end,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(999),
+              child: LinearProgressIndicator(
+                key: const ValueKey<String>('playback-progress'),
+                value: controller.playbackProgress,
+                minHeight: 8,
+                backgroundColor: const Color(0xFFD2D2D7),
+              ),
+            ),
+          ],
         ),
       ),
     );

@@ -40,6 +40,7 @@ void main() {
   testWidgets('toggles favorite songs', (WidgetTester tester) async {
     SharedPreferences.setMockInitialValues(<String, Object>{});
     final controller = Sprint1Controller();
+    addTearDown(controller.dispose);
     await controller.bootstrap();
 
     await tester.pumpWidget(
@@ -65,6 +66,7 @@ void main() {
   ) async {
     SharedPreferences.setMockInitialValues(<String, Object>{});
     final controller = Sprint1Controller();
+    addTearDown(controller.dispose);
     await controller.bootstrap();
 
     await tester.pumpWidget(
@@ -93,5 +95,47 @@ void main() {
       find.byKey(const ValueKey<String>('selected-track-link')),
       findsOneWidget,
     );
+  });
+
+  testWidgets('updates playback controls with play pause', (
+    WidgetTester tester,
+  ) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    final controller = Sprint1Controller();
+    addTearDown(controller.dispose);
+    await controller.bootstrap();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AnimatedBuilder(
+          animation: controller,
+          builder: (context, _) => Sprint1HomePage(controller: controller),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.drag(find.byType(ListView), const Offset(0, -900));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Reproducir'), findsOneWidget);
+    controller.togglePlayback();
+    await tester.pump(const Duration(seconds: 2));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Pausar'), findsOneWidget);
+
+    final progress = tester.widget<LinearProgressIndicator>(
+      find.byKey(const ValueKey<String>('playback-progress')),
+    );
+    expect(progress.value! > 0, isTrue);
+
+    final timeText = tester.widget<Text>(
+      find.byKey(const ValueKey<String>('playback-time-label')),
+    );
+    expect(timeText.data, isNot(contains('0:00 /')));
+
+    controller.togglePlayback();
+    await tester.pumpAndSettle();
   });
 }
