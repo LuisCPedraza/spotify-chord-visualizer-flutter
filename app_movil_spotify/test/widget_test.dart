@@ -3,6 +3,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:app_movil_spotify/app.dart';
+import 'package:app_movil_spotify/src/controller/sprint1_controller.dart';
+import 'package:app_movil_spotify/src/ui/sprint1_home_page.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -32,5 +34,28 @@ void main() {
 
     expect(find.textContaining('Coldplay'), findsWidgets);
     expect(find.text('Hotel California • Eagles'), findsNothing);
+  });
+
+  testWidgets('toggles favorite songs', (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    final controller = Sprint1Controller();
+    await controller.bootstrap();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AnimatedBuilder(
+          animation: controller,
+          builder: (context, _) => Sprint1HomePage(controller: controller),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await controller.toggleFavorite('1');
+    await tester.pumpAndSettle();
+
+    final favoriteButton = find.byKey(const ValueKey<String>('favorite-1'));
+    final toggledButton = tester.widget<IconButton>(favoriteButton);
+    expect(toggledButton.tooltip, 'Quitar de favoritos');
   });
 }
