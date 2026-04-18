@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:app_movil_spotify/app.dart';
 import 'package:app_movil_spotify/src/controller/sprint1_controller.dart';
+import 'package:app_movil_spotify/src/services/fake_spotify_catalog.dart';
 import 'package:app_movil_spotify/src/ui/sprint1_home_page.dart';
 
 void main() {
@@ -57,5 +58,40 @@ void main() {
     final favoriteButton = find.byKey(const ValueKey<String>('favorite-1'));
     final toggledButton = tester.widget<IconButton>(favoriteButton);
     expect(toggledButton.tooltip, 'Quitar de favoritos');
+  });
+
+  testWidgets('updates selected track metadata from catalog tap', (
+    WidgetTester tester,
+  ) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    final controller = Sprint1Controller();
+    await controller.bootstrap();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AnimatedBuilder(
+          animation: controller,
+          builder: (context, _) => Sprint1HomePage(controller: controller),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    controller.selectSong(fakeSpotifyCatalog[1]);
+    await tester.pumpAndSettle();
+
+    await tester.drag(find.byType(ListView), const Offset(0, -600));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey<String>('selected-track-title')),
+      findsOneWidget,
+    );
+    expect(find.text('Yellow'), findsAtLeastNWidgets(1));
+    expect(find.textContaining('Parachutes'), findsAtLeastNWidgets(1));
+    expect(
+      find.byKey(const ValueKey<String>('selected-track-link')),
+      findsOneWidget,
+    );
   });
 }
