@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:app_movil_spotify/app.dart';
 import 'package:app_movil_spotify/src/controller/sprint1_controller.dart';
+import 'package:app_movil_spotify/src/models/chord_segment.dart';
 import 'package:app_movil_spotify/src/services/fake_spotify_catalog.dart';
 import 'package:app_movil_spotify/src/ui/sprint1_home_page.dart';
 
@@ -137,5 +138,46 @@ void main() {
 
     controller.togglePlayback();
     await tester.pumpAndSettle();
+  });
+
+  testWidgets('shows synchronized active chord and difficulty', (
+    WidgetTester tester,
+  ) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    final controller = Sprint1Controller();
+    addTearDown(controller.dispose);
+    await controller.bootstrap();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AnimatedBuilder(
+          animation: controller,
+          builder: (context, _) => Sprint1HomePage(controller: controller),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    controller.selectSong(fakeSpotifyCatalog.first);
+    controller.seekPlayback(48);
+    await tester.pumpAndSettle();
+
+    await tester.drag(find.byType(ListView), const Offset(0, -1200));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey<String>('chord-active-label')),
+      findsOneWidget,
+    );
+    expect(find.text('Em7'), findsAtLeastNWidgets(1));
+
+    controller.setChordDifficulty(ChordDifficulty.basic);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Em'), findsAtLeastNWidgets(1));
+    expect(
+      find.byKey(const ValueKey<String>('chord-timeline-container')),
+      findsOneWidget,
+    );
   });
 }

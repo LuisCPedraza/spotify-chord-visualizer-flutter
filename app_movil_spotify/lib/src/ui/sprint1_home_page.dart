@@ -1,4 +1,5 @@
 import 'package:app_movil_spotify/src/controller/sprint1_controller.dart';
+import 'package:app_movil_spotify/src/models/chord_segment.dart';
 import 'package:app_movil_spotify/src/models/song.dart';
 import 'package:app_movil_spotify/src/models/user_session.dart';
 import 'package:flutter/material.dart';
@@ -47,6 +48,8 @@ class Sprint1HomePage extends StatelessWidget {
             _TrackMetadataCard(controller: controller),
             const SizedBox(height: 16),
             _PlayerControlsCard(controller: controller),
+            const SizedBox(height: 16),
+            _ChordViewerCard(controller: controller),
             const SizedBox(height: 16),
             const _FooterCard(),
           ],
@@ -473,6 +476,195 @@ class _PlayerControlsCard extends StatelessWidget {
                 value: controller.playbackProgress,
                 minHeight: 8,
                 backgroundColor: const Color(0xFFD2D2D7),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ChordViewerCard extends StatelessWidget {
+  final Sprint1Controller controller;
+
+  const _ChordViewerCard({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    final active = controller.activeChordSegment;
+    final timeline = controller.chordTimeline;
+    final upcoming = controller.upcomingChordSegments;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Acordes sincronizados',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                ),
+                DropdownButton<ChordDifficulty>(
+                  key: const ValueKey<String>('chord-difficulty-dropdown'),
+                  value: controller.chordDifficulty,
+                  onChanged: (difficulty) {
+                    if (difficulty != null) {
+                      controller.setChordDifficulty(difficulty);
+                    }
+                  },
+                  items: const [
+                    DropdownMenuItem(
+                      value: ChordDifficulty.basic,
+                      child: Text('Básico'),
+                    ),
+                    DropdownMenuItem(
+                      value: ChordDifficulty.intermediate,
+                      child: Text('Intermedio'),
+                    ),
+                    DropdownMenuItem(
+                      value: ChordDifficulty.full,
+                      child: Text('Completo'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF5F5F7),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFD2D2D7)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Acorde activo',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    controller.activeChordLabel,
+                    key: const ValueKey<String>('chord-active-label'),
+                    style: Theme.of(context).textTheme.headlineMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    active == null
+                        ? 'Sin progresión para esta pista.'
+                        : 'Ventana ${active.startSecond}s - ${active.endSecond}s',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text('Próximos', style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 8),
+            Wrap(
+              key: const ValueKey<String>('chord-upcoming-wrap'),
+              spacing: 8,
+              runSpacing: 8,
+              children: upcoming.isEmpty
+                  ? [
+                      Chip(
+                        label: Text(
+                          timeline.isEmpty ? 'No disponible' : 'Fin de sección',
+                        ),
+                      ),
+                    ]
+                  : upcoming
+                        .map(
+                          (segment) => Chip(
+                            label: Text(
+                              segment.labelFor(controller.chordDifficulty),
+                            ),
+                          ),
+                        )
+                        .toList(growable: false),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Timeline armónico',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
+            SingleChildScrollView(
+              key: const ValueKey<String>('chord-timeline-container'),
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: timeline.isEmpty
+                    ? [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFFD2D2D7)),
+                          ),
+                          child: Text(
+                            'Sin timeline',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        ),
+                      ]
+                    : timeline
+                          .map((segment) {
+                            final isActive = identical(segment, active);
+                            return Container(
+                              key: ValueKey<String>(
+                                'chord-segment-${segment.startSecond}-${segment.endSecond}',
+                              ),
+                              margin: const EdgeInsets.only(right: 8),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 10,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isActive
+                                    ? const Color(0xFFEFF6FF)
+                                    : const Color(0xFFF5F5F7),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: isActive
+                                      ? const Color(0xFF0071E3)
+                                      : const Color(0xFFD2D2D7),
+                                ),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    segment.labelFor(
+                                      controller.chordDifficulty,
+                                    ),
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.titleSmall,
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    '${segment.startSecond}s-${segment.endSecond}s',
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodySmall,
+                                  ),
+                                ],
+                              ),
+                            );
+                          })
+                          .toList(growable: false),
               ),
             ),
           ],
