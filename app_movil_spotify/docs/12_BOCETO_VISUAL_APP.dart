@@ -850,7 +850,7 @@ class TimelineBlock extends StatelessWidget {
       margin: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: active
-            ? AppMockColors.accent.withOpacity(0.14)
+            ? AppMockColors.accent.withValues(alpha: 0.14)
             : Colors.transparent,
         borderRadius: BorderRadius.circular(10),
       ),
