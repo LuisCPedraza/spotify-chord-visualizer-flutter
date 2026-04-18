@@ -39,6 +39,7 @@ class Sprint1HomePage extends StatelessWidget {
             _SearchCard(controller: controller, isConnected: isConnected),
             const SizedBox(height: 16),
             _CatalogCard(
+              controller: controller,
               songs: controller.visibleSongs,
               searchQuery: controller.searchQuery,
             ),
@@ -150,10 +151,15 @@ class _SearchCard extends StatelessWidget {
 }
 
 class _CatalogCard extends StatelessWidget {
+  final Sprint1Controller controller;
   final List<Song> songs;
   final String searchQuery;
 
-  const _CatalogCard({required this.songs, required this.searchQuery});
+  const _CatalogCard({
+    required this.controller,
+    required this.songs,
+    required this.searchQuery,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -169,6 +175,11 @@ class _CatalogCard extends StatelessWidget {
                   : 'Resultados de ejemplo (${songs.length})',
               style: Theme.of(context).textTheme.titleLarge,
             ),
+            const SizedBox(height: 4),
+            Text(
+              '${controller.favoriteCount} favorito${controller.favoriteCount == 1 ? '' : 's'} guardado${controller.favoriteCount == 1 ? '' : 's'}',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
             const SizedBox(height: 12),
             if (songs.isEmpty)
               _EmptySearchState(searchQuery: searchQuery)
@@ -176,7 +187,11 @@ class _CatalogCard extends StatelessWidget {
               ...songs.map(
                 (song) => Padding(
                   padding: const EdgeInsets.only(bottom: 10),
-                  child: _SongTile(song: song),
+                  child: _SongTile(
+                    song: song,
+                    isFavorite: controller.isFavorite(song.id),
+                    onFavoriteToggle: () => controller.toggleFavorite(song.id),
+                  ),
                 ),
               ),
           ],
@@ -221,8 +236,14 @@ class _EmptySearchState extends StatelessWidget {
 
 class _SongTile extends StatelessWidget {
   final Song song;
+  final bool isFavorite;
+  final VoidCallback onFavoriteToggle;
 
-  const _SongTile({required this.song});
+  const _SongTile({
+    required this.song,
+    required this.isFavorite,
+    required this.onFavoriteToggle,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -259,6 +280,19 @@ class _SongTile extends StatelessWidget {
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],
+            ),
+          ),
+          IconButton(
+            key: ValueKey<String>('favorite-${song.id}'),
+            onPressed: onFavoriteToggle,
+            tooltip: isFavorite
+                ? 'Quitar de favoritos'
+                : 'Marcar como favorito',
+            icon: Icon(
+              isFavorite ? Icons.favorite_rounded : Icons.favorite_border,
+              color: isFavorite
+                  ? const Color(0xFF0071E3)
+                  : const Color(0xFF6E6E73),
             ),
           ),
         ],

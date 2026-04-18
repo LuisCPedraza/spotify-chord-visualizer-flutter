@@ -10,16 +10,19 @@ class Sprint1Controller extends ChangeNotifier {
   static const String _connectedKey = 'sprint1_connected';
   static const String _displayNameKey = 'sprint1_display_name';
   static const String _connectedAtKey = 'sprint1_connected_at';
+  static const String _favoriteSongIdsKey = 'sprint1_favorite_song_ids';
 
   SharedPreferences? _storage;
 
   Sprint1ConnectionState _connectionState = Sprint1ConnectionState.disconnected;
   UserSession? _session;
   String _searchQuery = '';
+  final Set<String> _favoriteSongIds = <String>{};
 
   Sprint1ConnectionState get connectionState => _connectionState;
   UserSession? get session => _session;
   String get searchQuery => _searchQuery;
+  int get favoriteCount => _favoriteSongIds.length;
 
   String get connectionLabel =>
       _connectionState == Sprint1ConnectionState.connected
@@ -42,11 +45,16 @@ class Sprint1Controller extends ChangeNotifier {
       return fakeSpotifyCatalog;
     }
 
-    return fakeSpotifyCatalog.where((song) {
-      final haystack = '${song.title} ${song.artist} ${song.album}'.toLowerCase();
-      return haystack.contains(normalizedQuery);
-    }).toList(growable: false);
+    return fakeSpotifyCatalog
+        .where((song) {
+          final haystack = '${song.title} ${song.artist} ${song.album}'
+              .toLowerCase();
+          return haystack.contains(normalizedQuery);
+        })
+        .toList(growable: false);
   }
+
+  bool isFavorite(String songId) => _favoriteSongIds.contains(songId);
 
   Future<SharedPreferences> _preferences() async {
     return _storage ??= await SharedPreferences.getInstance();
@@ -62,6 +70,8 @@ class Sprint1Controller extends ChangeNotifier {
 
     final displayName = preferences.getString(_displayNameKey) ?? 'Luis Carlos';
     final connectedAtMillis = preferences.getInt(_connectedAtKey);
+    final favoriteSongIds =
+        preferences.getStringList(_favoriteSongIdsKey) ?? const <String>[];
 
     _connectionState = Sprint1ConnectionState.connected;
     _session = UserSession(
@@ -70,6 +80,9 @@ class Sprint1Controller extends ChangeNotifier {
         connectedAtMillis ?? DateTime.now().millisecondsSinceEpoch,
       ),
     );
+    _favoriteSongIds
+      ..clear()
+      ..addAll(favoriteSongIds);
     notifyListeners();
   }
 
@@ -113,6 +126,23 @@ class Sprint1Controller extends ChangeNotifier {
 
   void updateSearchQuery(String value) {
     _searchQuery = value;
+    notifyListeners();
+  }
+
+  Future<void> toggleFavorite(String songId) async {
+    final preferences = await _preferences();
+
+    if (_favoriteSongIds.contains(songId)) {
+      _favoriteSongIds.remove(songId);
+    } else {
+      _favoriteSongIds.add(songId);
+    }
+
+    await preferences.setStringList(
+      _favoriteSongIdsKey,
+      _favoriteSongIds.toList(growable: false),
+    );
+
     notifyListeners();
   }
 
