@@ -44,6 +44,8 @@ class Sprint1HomePage extends StatelessWidget {
               searchQuery: controller.searchQuery,
             ),
             const SizedBox(height: 16),
+            _TrackMetadataCard(controller: controller),
+            const SizedBox(height: 16),
             const _FooterCard(),
           ],
         ),
@@ -188,7 +190,9 @@ class _CatalogCard extends StatelessWidget {
                 (song) => Padding(
                   padding: const EdgeInsets.only(bottom: 10),
                   child: _SongTile(
+                    controller: controller,
                     song: song,
+                    isSelected: controller.selectedSong?.id == song.id,
                     isFavorite: controller.isFavorite(song.id),
                     onFavoriteToggle: () => controller.toggleFavorite(song.id),
                   ),
@@ -235,67 +239,167 @@ class _EmptySearchState extends StatelessWidget {
 }
 
 class _SongTile extends StatelessWidget {
+  final Sprint1Controller controller;
   final Song song;
+  final bool isSelected;
   final bool isFavorite;
   final VoidCallback onFavoriteToggle;
 
   const _SongTile({
+    required this.controller,
     required this.song,
+    required this.isSelected,
     required this.isFavorite,
     required this.onFavoriteToggle,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFD2D2D7)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF5F5F7),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(Icons.music_note_rounded),
+    return InkWell(
+      key: ValueKey<String>('song-tile-${song.id}'),
+      onTap: () => controller.selectSong(song),
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFFEFF6FF) : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected
+                ? const Color(0xFF0071E3)
+                : const Color(0xFFD2D2D7),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF5F5F7),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.music_note_rounded),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    song.title,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '${song.artist} • ${song.album}',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ),
+            ),
+            IconButton(
+              key: ValueKey<String>('favorite-${song.id}'),
+              onPressed: onFavoriteToggle,
+              tooltip: isFavorite
+                  ? 'Quitar de favoritos'
+                  : 'Marcar como favorito',
+              icon: Icon(
+                isFavorite ? Icons.favorite_rounded : Icons.favorite_border,
+                color: isFavorite
+                    ? const Color(0xFF0071E3)
+                    : const Color(0xFF6E6E73),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TrackMetadataCard extends StatelessWidget {
+  final Sprint1Controller controller;
+
+  const _TrackMetadataCard({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    Song? currentTrack = controller.selectedSong;
+    if (currentTrack == null && controller.visibleSongs.isNotEmpty) {
+      currentTrack = controller.visibleSongs.first;
+    }
+
+    if (currentTrack == null) {
+      return const SizedBox.shrink();
+    }
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Pista seleccionada',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 12),
+            Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  song.title,
-                  style: Theme.of(context).textTheme.titleMedium,
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.network(
+                    currentTrack.coverArtUrl,
+                    width: 78,
+                    height: 78,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        width: 78,
+                        height: 78,
+                        color: const Color(0xFFF5F5F7),
+                        alignment: Alignment.center,
+                        child: const Icon(Icons.album_rounded),
+                      );
+                    },
+                  ),
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  '${song.artist} • ${song.album}',
-                  style: Theme.of(context).textTheme.bodySmall,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        currentTrack.title,
+                        key: const ValueKey<String>('selected-track-title'),
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        currentTrack.artist,
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${currentTrack.album} • ${currentTrack.formattedDuration}',
+                        key: const ValueKey<String>('selected-track-meta'),
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
-          ),
-          IconButton(
-            key: ValueKey<String>('favorite-${song.id}'),
-            onPressed: onFavoriteToggle,
-            tooltip: isFavorite
-                ? 'Quitar de favoritos'
-                : 'Marcar como favorito',
-            icon: Icon(
-              isFavorite ? Icons.favorite_rounded : Icons.favorite_border,
-              color: isFavorite
-                  ? const Color(0xFF0071E3)
-                  : const Color(0xFF6E6E73),
+            const SizedBox(height: 12),
+            SelectableText(
+              currentTrack.spotifyTrackUrl,
+              key: const ValueKey<String>('selected-track-link'),
+              style: Theme.of(context).textTheme.bodySmall,
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

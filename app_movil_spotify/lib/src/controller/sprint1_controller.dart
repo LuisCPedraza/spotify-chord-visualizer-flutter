@@ -18,11 +18,13 @@ class Sprint1Controller extends ChangeNotifier {
   UserSession? _session;
   String _searchQuery = '';
   final Set<String> _favoriteSongIds = <String>{};
+  Song? _selectedSong;
 
   Sprint1ConnectionState get connectionState => _connectionState;
   UserSession? get session => _session;
   String get searchQuery => _searchQuery;
   int get favoriteCount => _favoriteSongIds.length;
+  Song? get selectedSong => _selectedSong;
 
   String get connectionLabel =>
       _connectionState == Sprint1ConnectionState.connected
@@ -83,6 +85,9 @@ class Sprint1Controller extends ChangeNotifier {
     _favoriteSongIds
       ..clear()
       ..addAll(favoriteSongIds);
+    if (_selectedSong == null && fakeSpotifyCatalog.isNotEmpty) {
+      _selectedSong = fakeSpotifyCatalog.first;
+    }
     notifyListeners();
   }
 
@@ -126,6 +131,19 @@ class Sprint1Controller extends ChangeNotifier {
 
   void updateSearchQuery(String value) {
     _searchQuery = value;
+
+    final results = visibleSongs;
+    if (results.isNotEmpty &&
+        (_selectedSong == null ||
+            !results.any((song) => song.id == _selectedSong!.id))) {
+      _selectedSong = results.first;
+    }
+
+    notifyListeners();
+  }
+
+  void selectSong(Song song) {
+    _selectedSong = song;
     notifyListeners();
   }
 
