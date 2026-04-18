@@ -1,30 +1,61 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:app_movil_spotify/main.dart';
+import 'package:app_movil_spotify/app.dart';
+import 'package:app_movil_spotify/src/controller/sprint1_controller.dart';
+import 'package:app_movil_spotify/src/ui/sprint1_home_page.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  TestWidgetsFlutterBinding.ensureInitialized();
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+  testWidgets('shows Sprint 1 scaffold', (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    await tester.pumpWidget(const SpotifyChordVisualizerApp());
+    await tester.pumpAndSettle();
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(find.text('Spotify Chord Visualizer'), findsOneWidget);
+    expect(find.text('Conectar con Spotify'), findsOneWidget);
+    expect(find.textContaining('Resultados de ejemplo'), findsOneWidget);
+  });
+
+  testWidgets('filters songs by query', (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+
+    await tester.pumpWidget(const SpotifyChordVisualizerApp());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Conectar con Spotify'));
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextField), 'coldplay');
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Coldplay'), findsWidgets);
+    expect(find.text('Hotel California • Eagles'), findsNothing);
+  });
+
+  testWidgets('toggles favorite songs', (WidgetTester tester) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    final controller = Sprint1Controller();
+    await controller.bootstrap();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AnimatedBuilder(
+          animation: controller,
+          builder: (context, _) => Sprint1HomePage(controller: controller),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await controller.toggleFavorite('1');
+    await tester.pumpAndSettle();
+
+    final favoriteButton = find.byKey(const ValueKey<String>('favorite-1'));
+    final toggledButton = tester.widget<IconButton>(favoriteButton);
+    expect(toggledButton.tooltip, 'Quitar de favoritos');
   });
 }

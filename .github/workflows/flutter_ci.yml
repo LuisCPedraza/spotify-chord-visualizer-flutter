@@ -1,0 +1,46 @@
+name: Flutter CI
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - 'hu-*'
+    paths:
+      - 'app_movil_spotify/**'
+      - '.github/workflows/flutter_ci.yml'
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'app_movil_spotify/**'
+      - '.github/workflows/flutter_ci.yml'
+
+jobs:
+  analyze_and_test:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: app_movil_spotify
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.41.4'
+          channel: stable
+          cache: true
+
+      - name: Pub get
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test
