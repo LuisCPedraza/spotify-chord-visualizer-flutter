@@ -80,9 +80,7 @@ class _StatusCard extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             Text(
-              isConnected && currentSession != null
-                  ? 'Sesión conectada como ${currentSession!.displayName}'
-                  : 'Aún no has iniciado sesión con Spotify.',
+              controller.sessionSummary,
               style: Theme.of(context).textTheme.bodyMedium,
             ),
             const SizedBox(height: 14),
