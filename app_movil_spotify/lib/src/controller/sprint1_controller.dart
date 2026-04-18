@@ -1,7 +1,9 @@
 import 'dart:async';
 
+import 'package:app_movil_spotify/src/models/chord_segment.dart';
 import 'package:app_movil_spotify/src/models/song.dart';
 import 'package:app_movil_spotify/src/models/user_session.dart';
+import 'package:app_movil_spotify/src/services/fake_chord_progressions.dart';
 import 'package:app_movil_spotify/src/services/fake_spotify_catalog.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -23,6 +25,7 @@ class Sprint1Controller extends ChangeNotifier {
   String _searchQuery = '';
   final Set<String> _favoriteSongIds = <String>{};
   Song? _selectedSong;
+  ChordDifficulty _chordDifficulty = ChordDifficulty.intermediate;
   PlaybackState _playbackState = PlaybackState.paused;
   int _playbackPositionSeconds = 0;
   Timer? _playbackTimer;
@@ -32,6 +35,7 @@ class Sprint1Controller extends ChangeNotifier {
   String get searchQuery => _searchQuery;
   int get favoriteCount => _favoriteSongIds.length;
   Song? get selectedSong => _selectedSong;
+  ChordDifficulty get chordDifficulty => _chordDifficulty;
   PlaybackState get playbackState => _playbackState;
   int get playbackPositionSeconds => _playbackPositionSeconds;
 
@@ -52,6 +56,56 @@ class Sprint1Controller extends ChangeNotifier {
     }
 
     return (_playbackPositionSeconds / duration).clamp(0, 1);
+  }
+
+  List<ChordSegment> get chordTimeline {
+    final trackId = _selectedSong?.id;
+    if (trackId == null) {
+      return const <ChordSegment>[];
+    }
+
+    return fakeChordProgressions[trackId] ?? const <ChordSegment>[];
+  }
+
+  ChordSegment? get activeChordSegment {
+    final timeline = chordTimeline;
+    if (timeline.isEmpty) {
+      return null;
+    }
+
+    for (final segment in timeline) {
+      if (_playbackPositionSeconds >= segment.startSecond &&
+          _playbackPositionSeconds < segment.endSecond) {
+        return segment;
+      }
+    }
+
+    return timeline.last;
+  }
+
+  List<ChordSegment> get upcomingChordSegments {
+    final timeline = chordTimeline;
+    final active = activeChordSegment;
+    if (timeline.isEmpty || active == null) {
+      return const <ChordSegment>[];
+    }
+
+    final activeIndex = timeline.indexOf(active);
+    if (activeIndex < 0 || activeIndex == timeline.length - 1) {
+      return const <ChordSegment>[];
+    }
+
+    final nextEnd = (activeIndex + 4).clamp(0, timeline.length);
+    return timeline.sublist(activeIndex + 1, nextEnd);
+  }
+
+  String get activeChordLabel {
+    final active = activeChordSegment;
+    if (active == null) {
+      return '-';
+    }
+
+    return active.labelFor(_chordDifficulty);
   }
 
   String get connectionLabel =>
@@ -178,6 +232,11 @@ class Sprint1Controller extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setChordDifficulty(ChordDifficulty difficulty) {
+    _chordDifficulty = difficulty;
+    notifyListeners();
+  }
+
   void togglePlayback() {
     if (_selectedSong == null) {
       return;
@@ -187,6 +246,22 @@ class Sprint1Controller extends ChangeNotifier {
       _setPlaybackState(PlaybackState.paused);
     } else {
       _setPlaybackState(PlaybackState.playing);
+    }
+    notifyListeners();
+  }
+
+  void seekPlayback(int seconds) {
+    final duration = currentTrackDurationSeconds;
+    if (duration <= 0) {
+      _playbackPositionSeconds = 0;
+      _setPlaybackState(PlaybackState.paused);
+      notifyListeners();
+      return;
+    }
+
+    _playbackPositionSeconds = seconds.clamp(0, duration);
+    if (_playbackPositionSeconds >= duration) {
+      _setPlaybackState(PlaybackState.paused);
     }
     notifyListeners();
   }
