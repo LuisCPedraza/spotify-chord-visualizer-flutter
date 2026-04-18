@@ -36,7 +36,17 @@ class Sprint1Controller extends ChangeNotifier {
     return 'Sesión conectada como ${currentSession.displayName} desde ${_formatDateTime(currentSession.connectedAt)}.';
   }
 
-  List<Song> get visibleSongs => fakeSpotifyCatalog;
+  List<Song> get visibleSongs {
+    final normalizedQuery = _searchQuery.trim().toLowerCase();
+    if (normalizedQuery.isEmpty) {
+      return fakeSpotifyCatalog;
+    }
+
+    return fakeSpotifyCatalog.where((song) {
+      final haystack = '${song.title} ${song.artist} ${song.album}'.toLowerCase();
+      return haystack.contains(normalizedQuery);
+    }).toList(growable: false);
+  }
 
   Future<SharedPreferences> _preferences() async {
     return _storage ??= await SharedPreferences.getInstance();

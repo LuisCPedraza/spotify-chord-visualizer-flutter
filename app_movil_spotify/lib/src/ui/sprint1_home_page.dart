@@ -38,7 +38,10 @@ class Sprint1HomePage extends StatelessWidget {
             const SizedBox(height: 16),
             _SearchCard(controller: controller, isConnected: isConnected),
             const SizedBox(height: 16),
-            _CatalogCard(songs: controller.visibleSongs),
+            _CatalogCard(
+              songs: controller.visibleSongs,
+              searchQuery: controller.searchQuery,
+            ),
             const SizedBox(height: 16),
             const _FooterCard(),
           ],
@@ -148,8 +151,9 @@ class _SearchCard extends StatelessWidget {
 
 class _CatalogCard extends StatelessWidget {
   final List<Song> songs;
+  final String searchQuery;
 
-  const _CatalogCard({required this.songs});
+  const _CatalogCard({required this.songs, required this.searchQuery});
 
   @override
   Widget build(BuildContext context) {
@@ -160,18 +164,56 @@ class _CatalogCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Resultados de ejemplo',
+              songs.isEmpty
+                  ? 'Sin coincidencias'
+                  : 'Resultados de ejemplo (${songs.length})',
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 12),
-            ...songs.map(
-              (song) => Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: _SongTile(song: song),
+            if (songs.isEmpty)
+              _EmptySearchState(searchQuery: searchQuery)
+            else
+              ...songs.map(
+                (song) => Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: _SongTile(song: song),
+                ),
               ),
-            ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _EmptySearchState extends StatelessWidget {
+  final String searchQuery;
+
+  const _EmptySearchState({required this.searchQuery});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF5F5F7),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFD2D2D7)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'No encontramos resultados para "$searchQuery".',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Prueba con otro artista, álbum o canción del catálogo de ejemplo.',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+        ],
       ),
     );
   }
