@@ -55,11 +55,14 @@ Este indice centraliza toda la documentacion del proyecto AppMovilSpotify para f
 17. [17_CALIDAD_SEGURIDAD_ETAPA_SPOTIFY_REAL.md](17_CALIDAD_SEGURIDAD_ETAPA_SPOTIFY_REAL.md)
    Criterios de calidad, seguridad y riesgos para la nueva integracion.
 
+18. [18_BACKLOG_OPERATIVO_ETAPA_SPOTIFY_REAL.md](18_BACKLOG_OPERATIVO_ETAPA_SPOTIFY_REAL.md)
+   Backlog operativo completo para ejecutar Sprint 5 a Sprint 8 con ramas y orden recomendado.
+
 ## Versionado documental
 
 - Version actual: v1.0
 - Fecha de actualizacion: 18-04-2026
-- Estado: Sprint 4 cerrado y nueva etapa Scrum documentada
+- Estado: Sprint 4 cerrado y nueva etapa Scrum documentada con backlog operativo
 
 ## Recomendacion de lectura
 
