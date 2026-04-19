@@ -55,7 +55,20 @@ class SpotifyAuthService implements SpotifyAuthGateway {
        _storage = storage ?? const FlutterSecureStorage(),
        clientId = clientId ?? _loadClientId(),
        redirectUri = redirectUri ?? _loadRedirectUri(),
-       scopes = List.unmodifiable(scopes ?? _defaultScopes);
+       scopes = List.unmodifiable(scopes ?? _defaultScopes) {
+    // Validación de credenciales
+    if (this.clientId.isEmpty) {
+      throw StateError(
+        'SPOTIFY_CLIENT_ID no configurado. '
+        'Verifica que .env exista en la raíz del proyecto con:\n'
+        '  SPOTIFY_CLIENT_ID=tu_client_id_aqui\n'
+        'O define la variable de entorno SPOTIFY_CLIENT_ID.',
+      );
+    }
+    if (this.redirectUri == _defaultRedirectUri) {
+      // Está bien, es el valor por defecto
+    }
+  }
 
   static String _loadClientId() {
     try {
