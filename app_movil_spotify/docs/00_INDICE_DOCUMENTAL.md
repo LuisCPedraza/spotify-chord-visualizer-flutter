@@ -58,11 +58,14 @@ Este indice centraliza toda la documentacion del proyecto AppMovilSpotify para f
 18. [18_BACKLOG_OPERATIVO_ETAPA_SPOTIFY_REAL.md](18_BACKLOG_OPERATIVO_ETAPA_SPOTIFY_REAL.md)
    Backlog operativo completo para ejecutar Sprint 5 a Sprint 8 con ramas y orden recomendado.
 
+19. [19_GUIA_CONFIGURACION_SPOTIFY_OAUTH.md](19_GUIA_CONFIGURACION_SPOTIFY_OAUTH.md)
+   Guía paso a paso para registrar la app en Spotify Developer, obtener Client ID y configurar Redirect URIs.
+
 ## Versionado documental
 
 - Version actual: v1.0
 - Fecha de actualizacion: 18-04-2026
-- Estado: Sprint 4 cerrado y nueva etapa Scrum documentada con backlog operativo
+- Estado: Sprint 4 cerrado, nueva etapa Scrum documentada con backlog operativo, y guía de configuración OAuth
 
 ## Recomendacion de lectura
 

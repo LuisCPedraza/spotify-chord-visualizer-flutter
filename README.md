@@ -17,7 +17,7 @@ La siguiente fase del producto ya esta documentada para evolucionar desde el MVP
 - [Plan de Sprints](app_movil_spotify/docs/16_PLAN_SPRINTS_ETAPA_SPOTIFY_REAL.md)
 - [Calidad y Seguridad](app_movil_spotify/docs/17_CALIDAD_SEGURIDAD_ETAPA_SPOTIFY_REAL.md)
 - [Backlog operativo detallado](app_movil_spotify/docs/18_BACKLOG_OPERATIVO_ETAPA_SPOTIFY_REAL.md)
-- [Backlog operativo detallado](app_movil_spotify/docs/18_BACKLOG_OPERATIVO_ETAPA_SPOTIFY_REAL.md)
+- [Guía configuración Spotify OAuth](app_movil_spotify/docs/19_GUIA_CONFIGURACION_SPOTIFY_OAUTH.md)
 
 ## Tecnologias
 
