@@ -26,6 +26,9 @@ class Sprint1Controller extends ChangeNotifier {
   final Set<String> _favoriteSongIds = <String>{};
   Song? _selectedSong;
   ChordDifficulty _chordDifficulty = ChordDifficulty.intermediate;
+  bool _chordHighContrast = false;
+  bool _chordFocusMode = false;
+  double _chordFontScale = 1.0;
   PlaybackState _playbackState = PlaybackState.paused;
   int _playbackPositionSeconds = 0;
   Timer? _playbackTimer;
@@ -36,6 +39,9 @@ class Sprint1Controller extends ChangeNotifier {
   int get favoriteCount => _favoriteSongIds.length;
   Song? get selectedSong => _selectedSong;
   ChordDifficulty get chordDifficulty => _chordDifficulty;
+  bool get chordHighContrast => _chordHighContrast;
+  bool get chordFocusMode => _chordFocusMode;
+  double get chordFontScale => _chordFontScale;
   PlaybackState get playbackState => _playbackState;
   int get playbackPositionSeconds => _playbackPositionSeconds;
 
@@ -234,6 +240,21 @@ class Sprint1Controller extends ChangeNotifier {
 
   void setChordDifficulty(ChordDifficulty difficulty) {
     _chordDifficulty = difficulty;
+    notifyListeners();
+  }
+
+  void setChordHighContrast(bool value) {
+    _chordHighContrast = value;
+    notifyListeners();
+  }
+
+  void setChordFocusMode(bool value) {
+    _chordFocusMode = value;
+    notifyListeners();
+  }
+
+  void setChordFontScale(double value) {
+    _chordFontScale = value.clamp(0.8, 1.8);
     notifyListeners();
   }
 
