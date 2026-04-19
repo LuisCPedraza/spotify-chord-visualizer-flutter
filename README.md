@@ -16,6 +16,8 @@ La siguiente fase del producto ya esta documentada para evolucionar desde el MVP
 - [Backlog Spotify Real](app_movil_spotify/docs/15_BACKLOG_SPOTIFY_REAL.md)
 - [Plan de Sprints](app_movil_spotify/docs/16_PLAN_SPRINTS_ETAPA_SPOTIFY_REAL.md)
 - [Calidad y Seguridad](app_movil_spotify/docs/17_CALIDAD_SEGURIDAD_ETAPA_SPOTIFY_REAL.md)
+- [Backlog operativo detallado](app_movil_spotify/docs/18_BACKLOG_OPERATIVO_ETAPA_SPOTIFY_REAL.md)
+- [Backlog operativo detallado](app_movil_spotify/docs/18_BACKLOG_OPERATIVO_ETAPA_SPOTIFY_REAL.md)
 
 ## Tecnologias
 
@@ -61,6 +63,8 @@ flutter run -t docs/12_BOCETO_VISUAL_APP.dart
 - [Guia de estilos minimalista](app_movil_spotify/docs/11_GUIA_STYLES_MINIMALISTA.md)
 - [Evidencia Sprint 4 (calidad y cierre)](app_movil_spotify/docs/13_EVIDENCIA_SPRINT4_CALIDAD.md)
 - [Paquete de entrega final](app_movil_spotify/docs/14_PAQUETE_ENTREGA_FINAL.md)
+- [Backlog operativo etapa Spotify Real](app_movil_spotify/docs/18_BACKLOG_OPERATIVO_ETAPA_SPOTIFY_REAL.md)
+- [Backlog operativo etapa Spotify Real](app_movil_spotify/docs/18_BACKLOG_OPERATIVO_ETAPA_SPOTIFY_REAL.md)
 
 ## Evidencia por Sprint (PRs)
 
