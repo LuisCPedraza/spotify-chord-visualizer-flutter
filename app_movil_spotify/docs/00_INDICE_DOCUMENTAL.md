@@ -34,17 +34,20 @@ Este indice centraliza toda la documentacion del proyecto AppMovilSpotify para f
 10. [10_PLANTILLA_ENTREGA_ACADEMICA.md](10_PLANTILLA_ENTREGA_ACADEMICA.md)
    Plantilla formal para entrega final con portada, estructura academica y anexos de evidencia.
 
-11. [11_GUIA_STYLES_MINIMALISTA_APPLE.md](11_GUIA_STYLES_MINIMALISTA_APPLE.md)
+11. [11_GUIA_STYLES_MINIMALISTA.md](11_GUIA_STYLES_MINIMALISTA.md)
    Guia visual de estilos minimalistas tipo Apple para aplicar en Flutter.
 
 12. [12_BOCETO_VISUAL_APP.md](12_BOCETO_VISUAL_APP.md)
    Boceto de pantallas y composicion visual del MVP con el estilo seleccionado.
 
+13. [13_EVIDENCIA_SPRINT4_CALIDAD.md](13_EVIDENCIA_SPRINT4_CALIDAD.md)
+   Evidencia de calidad del cierre: pruebas, script de demo y cierre de riesgos.
+
 ## Versionado documental
 
 - Version actual: v1.0
 - Fecha de actualizacion: 18-04-2026
-- Estado: listo para iniciar Sprint 1
+- Estado: Sprint 4 en cierre
 
 ## Recomendacion de lectura
 
