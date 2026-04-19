@@ -39,6 +39,12 @@ jobs:
           cache-key: ${{ runner.os }}-flutter-${{ hashFiles('**/pubspec.lock') }}
           cache-path: ${{ runner.tool_cache }}/flutter
 
+      - name: Create CI env file
+        run: |
+          cat << 'EOF' > .env
+          SPOTIFY_CLIENT_ID=ci-placeholder
+          EOF
+
       - name: Pub get
         run: flutter pub get
 
@@ -48,5 +54,10 @@ jobs:
       - name: Unit and Widget Tests
         run: flutter test --no-pub
 
+      - name: Install Linux Desktop Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libwebkit2gtk-4.1-dev libsecret-1-dev libsoup-3.0-dev libjsoncpp-dev xvfb
+
       - name: Integration Test
-        run: flutter test integration_test/app_flow_test.dart --no-pub --reporter=expanded
+        run: xvfb-run -a flutter test -d linux integration_test/app_flow_test.dart --no-pub --reporter=expanded
