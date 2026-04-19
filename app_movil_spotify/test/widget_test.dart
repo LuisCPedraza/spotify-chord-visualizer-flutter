@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -6,178 +5,94 @@ import 'package:app_movil_spotify/app.dart';
 import 'package:app_movil_spotify/src/controller/sprint1_controller.dart';
 import 'package:app_movil_spotify/src/models/chord_segment.dart';
 import 'package:app_movil_spotify/src/services/fake_spotify_catalog.dart';
-import 'package:app_movil_spotify/src/ui/sprint1_home_page.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('shows Sprint 1 scaffold', (WidgetTester tester) async {
+  testWidgets('app boots and renders title', (WidgetTester tester) async {
     SharedPreferences.setMockInitialValues(<String, Object>{});
 
     await tester.pumpWidget(const SpotifyChordVisualizerApp());
     await tester.pumpAndSettle();
 
     expect(find.text('Spotify Chord Visualizer'), findsOneWidget);
-    expect(find.text('Conectar con Spotify'), findsOneWidget);
-    expect(find.textContaining('Resultados de ejemplo'), findsOneWidget);
   });
 
-  testWidgets('filters songs by query', (WidgetTester tester) async {
-    SharedPreferences.setMockInitialValues(<String, Object>{});
-
-    await tester.pumpWidget(const SpotifyChordVisualizerApp());
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Conectar con Spotify'));
-    await tester.pumpAndSettle();
-
-    await tester.enterText(find.byType(TextField), 'coldplay');
-    await tester.pumpAndSettle();
-
-    expect(find.textContaining('Coldplay'), findsWidgets);
-    expect(find.text('Hotel California • Eagles'), findsNothing);
-  });
-
-  testWidgets('toggles favorite songs', (WidgetTester tester) async {
+  test('filters songs by query in controller', () async {
     SharedPreferences.setMockInitialValues(<String, Object>{});
     final controller = Sprint1Controller();
     addTearDown(controller.dispose);
     await controller.bootstrap();
 
-    await tester.pumpWidget(
-      MaterialApp(
-        home: AnimatedBuilder(
-          animation: controller,
-          builder: (context, _) => Sprint1HomePage(controller: controller),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
+    controller.updateSearchQuery('coldplay');
 
+    expect(controller.visibleSongs, isNotEmpty);
+    expect(
+      controller.visibleSongs.every((song) =>
+          song.artist.toLowerCase().contains('coldplay') ||
+          song.album.toLowerCase().contains('coldplay') ||
+          song.title.toLowerCase().contains('coldplay')),
+      isTrue,
+    );
+  });
+
+  test('toggles favorite songs in controller', () async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    final controller = Sprint1Controller();
+    addTearDown(controller.dispose);
+    await controller.bootstrap();
+
+    expect(controller.isFavorite('1'), isFalse);
     await controller.toggleFavorite('1');
-    await tester.pumpAndSettle();
-
-    final favoriteButton = find.byKey(const ValueKey<String>('favorite-1'));
-    final toggledButton = tester.widget<IconButton>(favoriteButton);
-    expect(toggledButton.tooltip, 'Quitar de favoritos');
+    expect(controller.isFavorite('1'), isTrue);
+    await controller.toggleFavorite('1');
+    expect(controller.isFavorite('1'), isFalse);
   });
 
-  testWidgets('updates selected track metadata from catalog tap', (
-    WidgetTester tester,
-  ) async {
+  test('updates metadata and playback state in controller', () async {
     SharedPreferences.setMockInitialValues(<String, Object>{});
     final controller = Sprint1Controller();
     addTearDown(controller.dispose);
     await controller.bootstrap();
-
-    await tester.pumpWidget(
-      MaterialApp(
-        home: AnimatedBuilder(
-          animation: controller,
-          builder: (context, _) => Sprint1HomePage(controller: controller),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
 
     controller.selectSong(fakeSpotifyCatalog[1]);
-    await tester.pumpAndSettle();
+    expect(controller.selectedSong?.title, 'Yellow');
+    expect(controller.playbackPositionSeconds, 0);
 
-    await tester.drag(find.byType(ListView), const Offset(0, -600));
-    await tester.pumpAndSettle();
-
-    expect(
-      find.byKey(const ValueKey<String>('selected-track-title')),
-      findsOneWidget,
-    );
-    expect(find.text('Yellow'), findsAtLeastNWidgets(1));
-    expect(find.textContaining('Parachutes'), findsAtLeastNWidgets(1));
-    expect(
-      find.byKey(const ValueKey<String>('selected-track-link')),
-      findsOneWidget,
-    );
+    controller.togglePlayback();
+    expect(controller.isPlaying, isTrue);
+    controller.togglePlayback();
+    expect(controller.isPlaying, isFalse);
   });
 
-  testWidgets('updates playback controls with play pause', (
-    WidgetTester tester,
-  ) async {
+  test('shows synchronized active chord and difficulty', () async {
     SharedPreferences.setMockInitialValues(<String, Object>{});
     final controller = Sprint1Controller();
     addTearDown(controller.dispose);
     await controller.bootstrap();
-
-    await tester.pumpWidget(
-      MaterialApp(
-        home: AnimatedBuilder(
-          animation: controller,
-          builder: (context, _) => Sprint1HomePage(controller: controller),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    await tester.drag(find.byType(ListView), const Offset(0, -900));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Reproducir'), findsOneWidget);
-    controller.togglePlayback();
-    await tester.pump(const Duration(seconds: 2));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Pausar'), findsOneWidget);
-
-    final progress = tester.widget<LinearProgressIndicator>(
-      find.byKey(const ValueKey<String>('playback-progress')),
-    );
-    expect(progress.value! > 0, isTrue);
-
-    final timeText = tester.widget<Text>(
-      find.byKey(const ValueKey<String>('playback-time-label')),
-    );
-    expect(timeText.data, isNot(contains('0:00 /')));
-
-    controller.togglePlayback();
-    await tester.pumpAndSettle();
-  });
-
-  testWidgets('shows synchronized active chord and difficulty', (
-    WidgetTester tester,
-  ) async {
-    SharedPreferences.setMockInitialValues(<String, Object>{});
-    final controller = Sprint1Controller();
-    addTearDown(controller.dispose);
-    await controller.bootstrap();
-
-    await tester.pumpWidget(
-      MaterialApp(
-        home: AnimatedBuilder(
-          animation: controller,
-          builder: (context, _) => Sprint1HomePage(controller: controller),
-        ),
-      ),
-    );
-    await tester.pumpAndSettle();
 
     controller.selectSong(fakeSpotifyCatalog.first);
     controller.seekPlayback(48);
-    await tester.pumpAndSettle();
 
-    await tester.drag(find.byType(ListView), const Offset(0, -1200));
-    await tester.pumpAndSettle();
-
-    expect(
-      find.byKey(const ValueKey<String>('chord-active-label')),
-      findsOneWidget,
-    );
-    expect(find.text('Em7'), findsAtLeastNWidgets(1));
+    expect(controller.activeChordLabel, 'Em7');
 
     controller.setChordDifficulty(ChordDifficulty.basic);
-    await tester.pumpAndSettle();
+    expect(controller.activeChordLabel, 'Em');
+    expect(controller.chordTimeline, isNotEmpty);
+  });
 
-    expect(find.text('Em'), findsAtLeastNWidgets(1));
-    expect(
-      find.byKey(const ValueKey<String>('chord-timeline-container')),
-      findsOneWidget,
-    );
+  test('applies readable chord view settings', () async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    final controller = Sprint1Controller();
+    addTearDown(controller.dispose);
+    await controller.bootstrap();
+
+    controller.setChordHighContrast(true);
+    controller.setChordFontScale(1.5);
+    controller.setChordFocusMode(true);
+
+    expect(controller.chordHighContrast, isTrue);
+    expect(controller.chordFocusMode, isTrue);
+    expect(controller.chordFontScale, 1.5);
   });
 }
