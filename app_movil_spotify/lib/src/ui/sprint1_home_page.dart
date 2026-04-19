@@ -3,6 +3,7 @@ import 'package:app_movil_spotify/src/models/chord_segment.dart';
 import 'package:app_movil_spotify/src/models/song.dart';
 import 'package:app_movil_spotify/src/models/user_session.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class Sprint1HomePage extends StatelessWidget {
   final Sprint1Controller controller;
@@ -477,15 +478,64 @@ class _TrackMetadataCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
-            SelectableText(
-              currentTrack.spotifyTrackUrl,
+            InkWell(
               key: const ValueKey<String>('selected-track-link'),
-              style: Theme.of(context).textTheme.bodySmall,
+              onTap: () => _openSpotifyLink(context, currentTrack!.spotifyTrackUrl),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.open_in_new_rounded,
+                      size: 14,
+                      color: Color(0xFF1DB954),
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        'Abrir en Spotify',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: const Color(0xFF1DB954),
+                          decoration: TextDecoration.underline,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _openSpotifyLink(BuildContext context, String url) async {
+    final uri = Uri.parse(url);
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('No se pudo abrir el enlace de Spotify.'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al abrir enlace: $e'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    }
   }
 }
 
