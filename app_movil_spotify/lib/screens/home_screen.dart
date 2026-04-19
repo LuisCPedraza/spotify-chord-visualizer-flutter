@@ -13,13 +13,23 @@ class _HomeScreenState extends State<HomeScreen> {
   List tracks = [];
   Map<String, dynamic>? currentAnalysis;
   bool isLoading = false;
+  String? errorMessage;
 
   Future<void> _searchTracks(String query) async {
-    setState(() => isLoading = true);
+    setState(() {
+      isLoading = true;
+      errorMessage = null;
+    });
     final results = await SpotifyService.searchTrack(query);
     setState(() {
-      tracks = results['tracks']['items'] ?? [];
+      final tracksMap = results['tracks'];
+      tracks = tracksMap is Map<String, dynamic>
+          ? (tracksMap['items'] as List? ?? <dynamic>[])
+          : <dynamic>[];
       isLoading = false;
+      if (tracks.isEmpty) {
+        errorMessage = 'No hay resultados o la sesion no esta autenticada.';
+      }
     });
   }
 
@@ -62,6 +72,11 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           if (isLoading) CircularProgressIndicator(),
+          if (errorMessage != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(errorMessage!),
+            ),
           Expanded(
             child: ListView.builder(
               itemCount: tracks.length,

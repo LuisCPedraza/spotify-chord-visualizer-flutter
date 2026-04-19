@@ -2,9 +2,11 @@ import 'dart:async';
 
 import 'package:app_movil_spotify/src/models/chord_segment.dart';
 import 'package:app_movil_spotify/src/models/song.dart';
+import 'package:app_movil_spotify/src/models/spotify_auth_session.dart';
 import 'package:app_movil_spotify/src/models/user_session.dart';
 import 'package:app_movil_spotify/src/services/fake_chord_progressions.dart';
 import 'package:app_movil_spotify/src/services/fake_spotify_catalog.dart';
+import 'package:app_movil_spotify/src/services/spotify_auth_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -16,9 +18,14 @@ class Sprint1Controller extends ChangeNotifier {
   static const String _connectedKey = 'sprint1_connected';
   static const String _displayNameKey = 'sprint1_display_name';
   static const String _connectedAtKey = 'sprint1_connected_at';
+  static const String _userIdKey = 'sprint1_user_id';
+  static const String _emailKey = 'sprint1_email';
+  static const String _tokenExpiryKey = 'sprint1_token_expiry';
+  static const String _scopesKey = 'sprint1_scopes';
   static const String _favoriteSongIdsKey = 'sprint1_favorite_song_ids';
 
   SharedPreferences? _storage;
+  final SpotifyAuthGateway _authService;
 
   Sprint1ConnectionState _connectionState = Sprint1ConnectionState.disconnected;
   UserSession? _session;
@@ -32,6 +39,11 @@ class Sprint1Controller extends ChangeNotifier {
   PlaybackState _playbackState = PlaybackState.paused;
   int _playbackPositionSeconds = 0;
   Timer? _playbackTimer;
+  bool _isAuthenticating = false;
+  String? _lastAuthError;
+
+  Sprint1Controller({SpotifyAuthGateway? authService})
+      : _authService = authService ?? SpotifyAuthService();
 
   Sprint1ConnectionState get connectionState => _connectionState;
   UserSession? get session => _session;
@@ -44,6 +56,8 @@ class Sprint1Controller extends ChangeNotifier {
   double get chordFontScale => _chordFontScale;
   PlaybackState get playbackState => _playbackState;
   int get playbackPositionSeconds => _playbackPositionSeconds;
+  bool get isAuthenticating => _isAuthenticating;
+  String? get lastAuthError => _lastAuthError;
 
   bool get isPlaying => _playbackState == PlaybackState.playing;
   int get currentTrackDurationSeconds => _selectedSong?.durationSeconds ?? 0;
@@ -117,16 +131,26 @@ class Sprint1Controller extends ChangeNotifier {
   String get connectionLabel =>
       _connectionState == Sprint1ConnectionState.connected
       ? 'Sesión lista'
+      : _isAuthenticating
+      ? 'Autenticando...'
       : 'Sin sesión';
 
   String get sessionSummary {
     final currentSession = _session;
     if (_connectionState != Sprint1ConnectionState.connected ||
         currentSession == null) {
+      if (_lastAuthError != null) {
+        return _lastAuthError!;
+      }
+
       return 'Aún no has iniciado sesión con Spotify.';
     }
 
-    return 'Sesión conectada como ${currentSession.displayName} desde ${_formatDateTime(currentSession.connectedAt)}.';
+    final expiryText = currentSession.accessTokenExpiresAt == null
+        ? 'sin expiración registrada'
+        : 'token activo hasta ${_formatDateTime(currentSession.accessTokenExpiresAt!)}';
+
+    return 'Sesión conectada como ${currentSession.displayName} desde ${_formatDateTime(currentSession.connectedAt)}. $expiryText.';
   }
 
   List<Song> get visibleSongs {
@@ -156,24 +180,29 @@ class Sprint1Controller extends ChangeNotifier {
     }
 
     final preferences = await _preferences();
-    final isConnected = preferences.getBool(_connectedKey) ?? false;
-    if (!isConnected) {
+    final favoriteSongIds =
+        preferences.getStringList(_favoriteSongIdsKey) ?? const <String>[];
+
+    final restoredRemoteSession = await _restoreRemoteSession();
+    if (restoredRemoteSession != null) {
+      await _persistSession(UserSession.fromAuthSession(restoredRemoteSession));
+      _favoriteSongIds
+        ..clear()
+        ..addAll(favoriteSongIds);
       notifyListeners();
       return;
     }
 
-    final displayName = preferences.getString(_displayNameKey) ?? 'Luis Carlos';
-    final connectedAtMillis = preferences.getInt(_connectedAtKey);
-    final favoriteSongIds =
-        preferences.getStringList(_favoriteSongIdsKey) ?? const <String>[];
+    final isConnected = preferences.getBool(_connectedKey) ?? false;
+    if (!isConnected) {
+      _favoriteSongIds
+        ..clear()
+        ..addAll(favoriteSongIds);
+      notifyListeners();
+      return;
+    }
 
-    _connectionState = Sprint1ConnectionState.connected;
-    _session = UserSession(
-      displayName: displayName,
-      connectedAt: DateTime.fromMillisecondsSinceEpoch(
-        connectedAtMillis ?? DateTime.now().millisecondsSinceEpoch,
-      ),
-    );
+    await _restoreLocalSession(preferences);
     _favoriteSongIds
       ..clear()
       ..addAll(favoriteSongIds);
@@ -181,38 +210,47 @@ class Sprint1Controller extends ChangeNotifier {
   }
 
   Future<void> connect() async {
-    final session = UserSession(
-      displayName: 'Luis Carlos',
-      connectedAt: DateTime.now(),
-    );
-    final preferences = await _preferences();
+    if (_isAuthenticating) {
+      return;
+    }
 
-    _connectionState = Sprint1ConnectionState.connected;
-    _session = session;
-
-    await Future.wait([
-      preferences.setBool(_connectedKey, true),
-      preferences.setString(_displayNameKey, session.displayName),
-      preferences.setInt(
-        _connectedAtKey,
-        session.connectedAt.millisecondsSinceEpoch,
-      ),
-    ]);
-
+    _lastAuthError = null;
+    _isAuthenticating = true;
     notifyListeners();
+
+    try {
+      final authSession = await _authService.login();
+      await _persistSession(UserSession.fromAuthSession(authSession));
+    } catch (error) {
+      _lastAuthError = _errorMessage(error);
+    } finally {
+      _isAuthenticating = false;
+      notifyListeners();
+    }
   }
 
   Future<void> disconnect() async {
     final preferences = await _preferences();
 
+    try {
+      await _authService.logout();
+    } catch (_) {
+      // Ignore cleanup errors and clear the local session anyway.
+    }
+
     _connectionState = Sprint1ConnectionState.disconnected;
     _session = null;
     _searchQuery = '';
+    _lastAuthError = null;
 
     await Future.wait([
       preferences.setBool(_connectedKey, false),
       preferences.remove(_displayNameKey),
       preferences.remove(_connectedAtKey),
+      preferences.remove(_userIdKey),
+      preferences.remove(_emailKey),
+      preferences.remove(_tokenExpiryKey),
+      preferences.remove(_scopesKey),
     ]);
 
     notifyListeners();
@@ -352,5 +390,66 @@ class Sprint1Controller extends ChangeNotifier {
   void dispose() {
     _playbackTimer?.cancel();
     super.dispose();
+  }
+
+  Future<SpotifyAuthSession?> _restoreRemoteSession() async {
+    try {
+      return await _authService.restoreSession();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> _restoreLocalSession(SharedPreferences preferences) async {
+    final displayName = preferences.getString(_displayNameKey) ?? 'Luis Carlos';
+    final connectedAtMillis = preferences.getInt(_connectedAtKey);
+    final tokenExpiryMillis = preferences.getInt(_tokenExpiryKey);
+    final userId = preferences.getString(_userIdKey);
+    final email = preferences.getString(_emailKey);
+    final scopes = preferences.getStringList(_scopesKey) ?? const <String>[];
+
+    _connectionState = Sprint1ConnectionState.connected;
+    _session = UserSession(
+      displayName: displayName,
+      connectedAt: DateTime.fromMillisecondsSinceEpoch(
+        connectedAtMillis ?? DateTime.now().millisecondsSinceEpoch,
+      ),
+      userId: userId,
+      email: email,
+      accessTokenExpiresAt: tokenExpiryMillis == null
+          ? null
+          : DateTime.fromMillisecondsSinceEpoch(tokenExpiryMillis),
+      scopes: scopes,
+    );
+  }
+
+  Future<void> _persistSession(UserSession session) async {
+    _connectionState = Sprint1ConnectionState.connected;
+    _session = session;
+
+    final preferences = await _preferences();
+    await Future.wait([
+      preferences.setBool(_connectedKey, true),
+      preferences.setString(_displayNameKey, session.displayName),
+      preferences.setInt(
+        _connectedAtKey,
+        session.connectedAt.millisecondsSinceEpoch,
+      ),
+      preferences.setString(_userIdKey, session.userId ?? ''),
+      preferences.setString(_emailKey, session.email ?? ''),
+      preferences.setInt(
+        _tokenExpiryKey,
+        session.accessTokenExpiresAt?.millisecondsSinceEpoch ??
+            DateTime.now().millisecondsSinceEpoch,
+      ),
+      preferences.setStringList(_scopesKey, session.scopes),
+    ]);
+  }
+
+  String _errorMessage(Object error) {
+    final message = error.toString();
+    return message.startsWith('StateError: ')
+        ? message.replaceFirst('StateError: ', '')
+        : 'No se pudo iniciar sesion con Spotify: $message';
   }
 }

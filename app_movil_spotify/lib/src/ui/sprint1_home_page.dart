@@ -19,15 +19,15 @@ class Sprint1HomePage extends StatelessWidget {
     final children = <Widget>[
       Text(
         focusMode
-            ? 'Sprint 3 - Chord Viewer (Modo enfoque)'
-            : 'Sprint 3 - Chord Viewer',
+            ? 'Sprint 5 - Spotify Real (Modo enfoque)'
+            : 'Sprint 5 - Spotify Real',
         style: Theme.of(context).textTheme.headlineSmall,
       ),
       const SizedBox(height: 6),
       Text(
         focusMode
             ? 'Vista enfocada para practicar acordes sin distracciones.'
-            : 'Base de autenticación, sesión y búsqueda para el MVP musical.',
+            : 'Autenticacion real, sesion persistente y base para la API de Spotify.',
         style: Theme.of(context).textTheme.bodyMedium,
       ),
       const SizedBox(height: 20),
@@ -114,11 +114,17 @@ class _StatusCard extends StatelessWidget {
               runSpacing: 12,
               children: [
                 ElevatedButton(
-                  onPressed: controller.connect,
-                  child: const Text('Conectar con Spotify'),
+                  onPressed: controller.isAuthenticating ? null : controller.connect,
+                  child: Text(
+                    controller.isAuthenticating
+                        ? 'Iniciando sesion...'
+                        : 'Iniciar sesion con Spotify',
+                  ),
                 ),
                 OutlinedButton(
-                  onPressed: controller.disconnect,
+                  onPressed: controller.isAuthenticating
+                      ? null
+                      : controller.disconnect,
                   child: const Text('Cerrar sesión'),
                 ),
               ],

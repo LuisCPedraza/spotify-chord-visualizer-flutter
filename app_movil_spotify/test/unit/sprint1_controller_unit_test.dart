@@ -1,13 +1,31 @@
 import 'package:app_movil_spotify/src/controller/sprint1_controller.dart';
 import 'package:app_movil_spotify/src/models/chord_segment.dart';
+import 'package:app_movil_spotify/src/models/spotify_auth_session.dart';
 import 'package:app_movil_spotify/src/services/fake_spotify_catalog.dart';
+import 'package:app_movil_spotify/src/services/spotify_auth_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+class FakeSpotifyAuthGateway implements SpotifyAuthGateway {
+  @override
+  Future<SpotifyAuthSession?> restoreSession() async => null;
+
+  @override
+  Future<SpotifyAuthSession> login() async {
+    throw UnsupportedError('login not implemented in fake');
+  }
+
+  @override
+  Future<void> logout() async {}
+
+  @override
+  Future<String?> getValidAccessToken() async => null;
+}
 
 void main() {
   test('bootstrap initializes selected song', () async {
     SharedPreferences.setMockInitialValues(<String, Object>{});
-    final controller = Sprint1Controller();
+    final controller = Sprint1Controller(authService: FakeSpotifyAuthGateway());
     addTearDown(controller.dispose);
 
     await controller.bootstrap();
@@ -17,7 +35,7 @@ void main() {
 
   test('selectSong resets playback and pauses player', () async {
     SharedPreferences.setMockInitialValues(<String, Object>{});
-    final controller = Sprint1Controller();
+    final controller = Sprint1Controller(authService: FakeSpotifyAuthGateway());
     addTearDown(controller.dispose);
 
     await controller.bootstrap();
@@ -33,7 +51,7 @@ void main() {
 
   test('chord difficulty changes active chord label', () async {
     SharedPreferences.setMockInitialValues(<String, Object>{});
-    final controller = Sprint1Controller();
+    final controller = Sprint1Controller(authService: FakeSpotifyAuthGateway());
     addTearDown(controller.dispose);
 
     await controller.bootstrap();
