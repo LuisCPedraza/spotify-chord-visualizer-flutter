@@ -2,6 +2,12 @@
 
 Aplicacion movil en Flutter que integra Spotify y presenta acordes sincronizados con una interfaz minimalista orientada a practica musical.
 
+## Estado Final
+
+- Version objetivo: v1.0.0
+- Estado del proyecto: MVP cerrado y validado por sprints
+- Sprints cerrados: Sprint 1, Sprint 2, Sprint 3, Sprint 4
+
 ## Tecnologias
 
 ![Flutter](https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white)
@@ -44,6 +50,14 @@ flutter run -t docs/12_BOCETO_VISUAL_APP.dart
 - [Scrum plan](app_movil_spotify/docs/02_SCRUM_PLAN.md)
 - [Arquitectura tecnica](app_movil_spotify/docs/03_ARQUITECTURA_TECNICA.md)
 - [Guia de estilos minimalista](app_movil_spotify/docs/11_GUIA_STYLES_MINIMALISTA.md)
+- [Evidencia Sprint 4 (calidad y cierre)](app_movil_spotify/docs/13_EVIDENCIA_SPRINT4_CALIDAD.md)
+
+## Evidencia por Sprint (PRs)
+
+- Sprint 1: HU-01 HU-02 HU-03
+- Sprint 2: HU-04 HU-05
+- Sprint 3: HU-06 HU-07
+- Sprint 4: HU-08 HU-09
 
 ## Stack
 
@@ -53,9 +67,9 @@ flutter run -t docs/12_BOCETO_VISUAL_APP.dart
 
 ## Estado
 
-- Version actual: v0.1.0
+- Version actual: v1.0.0 (release final)
 - Rama principal: main
-- Estado del proyecto: MVP de diseno y planificacion completado
+- Estado del proyecto: MVP funcional con hardening y evidencia academica
 
 ## Autor
 
