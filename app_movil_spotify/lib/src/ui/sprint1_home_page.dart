@@ -590,6 +590,23 @@ class _PlayerControlsCard extends StatelessWidget {
                 backgroundColor: const Color(0xFFD2D2D7),
               ),
             ),
+            if (controller.playbackStatusMessage != null) ...[
+              const SizedBox(height: 10),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF8E1),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: const Color(0xFFFFE082)),
+                ),
+                child: Text(
+                  controller.playbackStatusMessage!,
+                  key: const ValueKey<String>('playback-status-message'),
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
+            ],
           ],
         ),
       ),

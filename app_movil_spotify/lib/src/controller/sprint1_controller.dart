@@ -40,13 +40,16 @@ class Sprint1Controller extends ChangeNotifier {
   PlaybackState _playbackState = PlaybackState.paused;
   int _playbackPositionSeconds = 0;
   Timer? _playbackTimer;
+  Timer? _remotePlaybackSyncTimer;
   Timer? _searchDebounce;
   bool _isAuthenticating = false;
   bool _isSearching = false;
   String? _lastSearchError;
+  String? _playbackStatusMessage;
   int _searchRequestId = 0;
   List<Song> _spotifySearchResults = const <Song>[];
   String? _lastAuthError;
+  bool _isDisposed = false;
 
   Sprint1Controller({SpotifyAuthGateway? authService})
       : _authService = authService ?? SpotifyAuthService();
@@ -65,6 +68,7 @@ class Sprint1Controller extends ChangeNotifier {
   bool get isAuthenticating => _isAuthenticating;
   bool get isSearching => _isSearching;
   String? get lastSearchError => _lastSearchError;
+  String? get playbackStatusMessage => _playbackStatusMessage;
   String? get lastAuthError => _lastAuthError;
 
   bool get isPlaying => _playbackState == PlaybackState.playing;
@@ -201,6 +205,7 @@ class Sprint1Controller extends ChangeNotifier {
     final restoredRemoteSession = await _restoreRemoteSession();
     if (restoredRemoteSession != null) {
       await _persistSession(UserSession.fromAuthSession(restoredRemoteSession));
+      _startRemotePlaybackSync();
       _favoriteSongIds
         ..clear()
         ..addAll(favoriteSongIds);
@@ -236,6 +241,7 @@ class Sprint1Controller extends ChangeNotifier {
     try {
       final authSession = await _authService.login();
       await _persistSession(UserSession.fromAuthSession(authSession));
+      _startRemotePlaybackSync();
     } catch (error) {
       _lastAuthError = _errorMessage(error);
     } finally {
@@ -255,6 +261,7 @@ class Sprint1Controller extends ChangeNotifier {
 
     _connectionState = Sprint1ConnectionState.disconnected;
     _session = null;
+    _playbackStatusMessage = null;
     _searchQuery = '';
     _spotifySearchResults = const <Song>[];
     _lastSearchError = null;
@@ -270,6 +277,9 @@ class Sprint1Controller extends ChangeNotifier {
       preferences.remove(_tokenExpiryKey),
       preferences.remove(_scopesKey),
     ]);
+
+    _remotePlaybackSyncTimer?.cancel();
+    _remotePlaybackSyncTimer = null;
 
     notifyListeners();
   }
@@ -371,6 +381,11 @@ class Sprint1Controller extends ChangeNotifier {
   }
 
   void togglePlayback() {
+    if (_usesRemotePlayback) {
+      unawaited(_toggleRemotePlayback());
+      return;
+    }
+
     if (_selectedSong == null) {
       return;
     }
@@ -384,6 +399,16 @@ class Sprint1Controller extends ChangeNotifier {
   }
 
   void seekPlayback(int seconds) {
+    if (_usesRemotePlayback) {
+      final duration = currentTrackDurationSeconds;
+      _playbackPositionSeconds = duration <= 0
+          ? 0
+          : seconds.clamp(0, duration);
+      notifyListeners();
+      unawaited(_seekRemotePlayback(seconds));
+      return;
+    }
+
     final duration = currentTrackDurationSeconds;
     if (duration <= 0) {
       _playbackPositionSeconds = 0;
@@ -401,6 +426,12 @@ class Sprint1Controller extends ChangeNotifier {
 
   void _setPlaybackState(PlaybackState state) {
     _playbackState = state;
+    if (_usesRemotePlayback) {
+      _playbackTimer?.cancel();
+      _playbackTimer = null;
+      return;
+    }
+
     if (state == PlaybackState.playing) {
       _playbackTimer?.cancel();
       _playbackTimer = Timer.periodic(const Duration(seconds: 1), (_) {
@@ -462,9 +493,92 @@ class Sprint1Controller extends ChangeNotifier {
 
   @override
   void dispose() {
+    _isDisposed = true;
     _playbackTimer?.cancel();
+    _remotePlaybackSyncTimer?.cancel();
     _searchDebounce?.cancel();
     super.dispose();
+  }
+
+  bool get _usesRemotePlayback {
+    return _connectionState == Sprint1ConnectionState.connected && _session != null;
+  }
+
+  void _startRemotePlaybackSync() {
+    _remotePlaybackSyncTimer?.cancel();
+    _remotePlaybackSyncTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+      unawaited(_syncRemotePlayback(silent: true));
+    });
+    unawaited(_syncRemotePlayback(silent: false));
+  }
+
+  Future<void> _syncRemotePlayback({required bool silent}) async {
+    if (_isDisposed || !_usesRemotePlayback) {
+      return;
+    }
+
+    try {
+      final snapshot = await SpotifyService.getPlaybackSnapshot();
+      if (snapshot == null) {
+        _setPlaybackState(PlaybackState.paused);
+        _playbackPositionSeconds = 0;
+        if (!silent) {
+          _playbackStatusMessage =
+              'No hay reproduccion activa en Spotify. Abre Spotify para sincronizar controles.';
+        }
+        _notifySafely();
+        return;
+      }
+
+      _playbackStatusMessage = null;
+      if (snapshot.track != null) {
+        _selectedSong = snapshot.track;
+      }
+      _playbackPositionSeconds = snapshot.progressSeconds.clamp(
+        0,
+        currentTrackDurationSeconds,
+      );
+      _setPlaybackState(
+        snapshot.isPlaying ? PlaybackState.playing : PlaybackState.paused,
+      );
+      _notifySafely();
+    } catch (error) {
+      if (!silent) {
+        _playbackStatusMessage = _errorMessage(error);
+        _notifySafely();
+      }
+    }
+  }
+
+  Future<void> _toggleRemotePlayback() async {
+    try {
+      if (isPlaying) {
+        await SpotifyService.pausePlayback();
+      } else {
+        await SpotifyService.playTrack(trackId: _selectedSong?.id);
+      }
+      await _syncRemotePlayback(silent: false);
+    } catch (error) {
+      _playbackStatusMessage = _errorMessage(error);
+      _notifySafely();
+    }
+  }
+
+  Future<void> _seekRemotePlayback(int seconds) async {
+    try {
+      await SpotifyService.seekPlayback(seconds);
+      await _syncRemotePlayback(silent: true);
+    } catch (error) {
+      _playbackStatusMessage = _errorMessage(error);
+      _notifySafely();
+    }
+  }
+
+  void _notifySafely() {
+    if (_isDisposed) {
+      return;
+    }
+    notifyListeners();
   }
 
   Future<SpotifyAuthSession?> _restoreRemoteSession() async {
