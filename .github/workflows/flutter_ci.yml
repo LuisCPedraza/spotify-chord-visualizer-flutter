@@ -44,3 +44,6 @@ jobs:
 
       - name: Test
         run: flutter test
+
+      - name: Integration test
+        run: flutter test integration_test/app_flow_test.dart
