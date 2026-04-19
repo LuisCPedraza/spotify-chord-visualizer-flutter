@@ -43,11 +43,23 @@ Este indice centraliza toda la documentacion del proyecto AppMovilSpotify para f
 13. [13_EVIDENCIA_SPRINT4_CALIDAD.md](13_EVIDENCIA_SPRINT4_CALIDAD.md)
    Evidencia de calidad del cierre: pruebas, script de demo y cierre de riesgos.
 
+14. [14_ETAPA_SCRUM_SPOTIFY_REAL.md](14_ETAPA_SCRUM_SPOTIFY_REAL.md)
+   Vision general de la nueva etapa Scrum para integracion real con Spotify API.
+
+15. [15_BACKLOG_SPOTIFY_REAL.md](15_BACKLOG_SPOTIFY_REAL.md)
+   Backlog propuesto con epicas, HUs, criterios de aceptacion y orden recomendado.
+
+16. [16_PLAN_SPRINTS_ETAPA_SPOTIFY_REAL.md](16_PLAN_SPRINTS_ETAPA_SPOTIFY_REAL.md)
+   Roadmap de sprints 5 a 8 para la nueva etapa.
+
+17. [17_CALIDAD_SEGURIDAD_ETAPA_SPOTIFY_REAL.md](17_CALIDAD_SEGURIDAD_ETAPA_SPOTIFY_REAL.md)
+   Criterios de calidad, seguridad y riesgos para la nueva integracion.
+
 ## Versionado documental
 
 - Version actual: v1.0
 - Fecha de actualizacion: 18-04-2026
-- Estado: Sprint 4 cerrado
+- Estado: Sprint 4 cerrado y nueva etapa Scrum documentada
 
 ## Recomendacion de lectura
 

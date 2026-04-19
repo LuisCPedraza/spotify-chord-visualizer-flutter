@@ -8,6 +8,15 @@ Aplicacion movil en Flutter que integra Spotify y presenta acordes sincronizados
 - Estado del proyecto: MVP cerrado y validado por sprints
 - Sprints cerrados: Sprint 1, Sprint 2, Sprint 3, Sprint 4
 
+## Nueva Etapa Scrum
+
+La siguiente fase del producto ya esta documentada para evolucionar desde el MVP hacia una integracion real con Spotify API.
+
+- [Etapa Scrum Spotify Real](app_movil_spotify/docs/14_ETAPA_SCRUM_SPOTIFY_REAL.md)
+- [Backlog Spotify Real](app_movil_spotify/docs/15_BACKLOG_SPOTIFY_REAL.md)
+- [Plan de Sprints](app_movil_spotify/docs/16_PLAN_SPRINTS_ETAPA_SPOTIFY_REAL.md)
+- [Calidad y Seguridad](app_movil_spotify/docs/17_CALIDAD_SEGURIDAD_ETAPA_SPOTIFY_REAL.md)
+
 ## Tecnologias
 
 ![Flutter](https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white)
@@ -51,6 +60,7 @@ flutter run -t docs/12_BOCETO_VISUAL_APP.dart
 - [Arquitectura tecnica](app_movil_spotify/docs/03_ARQUITECTURA_TECNICA.md)
 - [Guia de estilos minimalista](app_movil_spotify/docs/11_GUIA_STYLES_MINIMALISTA.md)
 - [Evidencia Sprint 4 (calidad y cierre)](app_movil_spotify/docs/13_EVIDENCIA_SPRINT4_CALIDAD.md)
+- [Paquete de entrega final](app_movil_spotify/docs/14_PAQUETE_ENTREGA_FINAL.md)
 
 ## Evidencia por Sprint (PRs)
 
