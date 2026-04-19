@@ -47,7 +47,7 @@ Este indice centraliza toda la documentacion del proyecto AppMovilSpotify para f
 
 - Version actual: v1.0
 - Fecha de actualizacion: 18-04-2026
-- Estado: Sprint 4 en cierre
+- Estado: Sprint 4 cerrado
 
 ## Recomendacion de lectura
 
