@@ -39,6 +39,12 @@ jobs:
           cache-key: ${{ runner.os }}-flutter-${{ hashFiles('**/pubspec.lock') }}
           cache-path: ${{ runner.tool_cache }}/flutter
 
+      - name: Create CI env file
+        run: |
+          cat << 'EOF' > .env
+          SPOTIFY_CLIENT_ID=ci-placeholder
+          EOF
+
       - name: Pub get
         run: flutter pub get
 
