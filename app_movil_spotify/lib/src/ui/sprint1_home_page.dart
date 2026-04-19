@@ -197,7 +197,11 @@ class _SearchCard extends StatelessWidget {
             const SizedBox(height: 10),
             Text(
               isConnected
-                  ? 'Escribe para filtrar el catálogo de demostración.'
+                  ? controller.isSearching
+                        ? 'Buscando en Spotify...'
+                        : controller.lastSearchError != null
+                        ? 'Error en la consulta. Revisa tu conexión e intenta de nuevo.'
+                        : 'Escribe para buscar canciones reales en Spotify.'
                   : 'Conecta tu sesión para habilitar la búsqueda.',
               style: Theme.of(context).textTheme.bodySmall,
             ),
@@ -228,9 +232,13 @@ class _CatalogCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              songs.isEmpty
+              controller.isSearching
+                  ? 'Buscando en Spotify...'
+                  : controller.lastSearchError != null
+                  ? 'Error de búsqueda'
+                  : songs.isEmpty
                   ? 'Sin coincidencias'
-                  : 'Resultados de ejemplo (${songs.length})',
+                  : 'Resultados de Spotify (${songs.length})',
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 4),
@@ -239,7 +247,25 @@ class _CatalogCard extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 12),
-            if (songs.isEmpty)
+            if (controller.lastSearchError != null)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade50,
+                  border: Border.all(color: Colors.red.shade300),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  controller.lastSearchError!,
+                  style: TextStyle(
+                    color: Colors.red.shade700,
+                    fontSize: 12,
+                    fontFamily: 'monospace',
+                  ),
+                ),
+              )
+            else if (songs.isEmpty)
               _EmptySearchState(searchQuery: searchQuery)
             else
               ...songs.map(
@@ -280,12 +306,14 @@ class _EmptySearchState extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'No encontramos resultados para "$searchQuery".',
+            searchQuery.trim().isEmpty
+                ? 'Escribe un término para buscar en Spotify.'
+                : 'No encontramos resultados para "$searchQuery".',
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 6),
           Text(
-            'Prueba con otro artista, álbum o canción del catálogo de ejemplo.',
+            'Prueba con otro artista, álbum o canción del catálogo real.',
             style: Theme.of(context).textTheme.bodySmall,
           ),
         ],

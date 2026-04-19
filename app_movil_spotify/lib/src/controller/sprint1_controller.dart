@@ -7,6 +7,7 @@ import 'package:app_movil_spotify/src/models/user_session.dart';
 import 'package:app_movil_spotify/src/services/fake_chord_progressions.dart';
 import 'package:app_movil_spotify/src/services/fake_spotify_catalog.dart';
 import 'package:app_movil_spotify/src/services/spotify_auth_service.dart';
+import 'package:app_movil_spotify/services/spotify_service.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -39,7 +40,12 @@ class Sprint1Controller extends ChangeNotifier {
   PlaybackState _playbackState = PlaybackState.paused;
   int _playbackPositionSeconds = 0;
   Timer? _playbackTimer;
+  Timer? _searchDebounce;
   bool _isAuthenticating = false;
+  bool _isSearching = false;
+  String? _lastSearchError;
+  int _searchRequestId = 0;
+  List<Song> _spotifySearchResults = const <Song>[];
   String? _lastAuthError;
 
   Sprint1Controller({SpotifyAuthGateway? authService})
@@ -57,6 +63,8 @@ class Sprint1Controller extends ChangeNotifier {
   PlaybackState get playbackState => _playbackState;
   int get playbackPositionSeconds => _playbackPositionSeconds;
   bool get isAuthenticating => _isAuthenticating;
+  bool get isSearching => _isSearching;
+  String? get lastSearchError => _lastSearchError;
   String? get lastAuthError => _lastAuthError;
 
   bool get isPlaying => _playbackState == PlaybackState.playing;
@@ -154,6 +162,13 @@ class Sprint1Controller extends ChangeNotifier {
   }
 
   List<Song> get visibleSongs {
+    if (_connectionState == Sprint1ConnectionState.connected) {
+      if (_searchQuery.trim().isEmpty) {
+        return const <Song>[];
+      }
+      return _spotifySearchResults;
+    }
+
     final normalizedQuery = _searchQuery.trim().toLowerCase();
     if (normalizedQuery.isEmpty) {
       return fakeSpotifyCatalog;
@@ -241,6 +256,9 @@ class Sprint1Controller extends ChangeNotifier {
     _connectionState = Sprint1ConnectionState.disconnected;
     _session = null;
     _searchQuery = '';
+    _spotifySearchResults = const <Song>[];
+    _lastSearchError = null;
+    _isSearching = false;
     _lastAuthError = null;
 
     await Future.wait([
@@ -259,14 +277,70 @@ class Sprint1Controller extends ChangeNotifier {
   void updateSearchQuery(String value) {
     _searchQuery = value;
 
-    final results = visibleSongs;
-    if (results.isNotEmpty &&
-        (_selectedSong == null ||
-            !results.any((song) => song.id == _selectedSong!.id))) {
-      _selectedSong = results.first;
+    final isConnected =
+        _connectionState == Sprint1ConnectionState.connected && _session != null;
+    if (!isConnected) {
+      _lastSearchError = null;
+      _isSearching = false;
+
+      final results = visibleSongs;
+      if (results.isNotEmpty &&
+          (_selectedSong == null ||
+              !results.any((song) => song.id == _selectedSong!.id))) {
+        _selectedSong = results.first;
+      }
+
+      notifyListeners();
+      return;
     }
 
+    _searchDebounce?.cancel();
+    _lastSearchError = null;
+
+    final normalized = value.trim();
+    if (normalized.isEmpty) {
+      _spotifySearchResults = const <Song>[];
+      _isSearching = false;
+      notifyListeners();
+      return;
+    }
+
+    final requestId = ++_searchRequestId;
+    _isSearching = true;
     notifyListeners();
+
+    _searchDebounce = Timer(const Duration(milliseconds: 400), () {
+      _runSpotifySearch(normalized, requestId);
+    });
+  }
+
+  Future<void> _runSpotifySearch(String query, int requestId) async {
+    try {
+      final songs = await SpotifyService.searchSongs(query);
+      if (requestId != _searchRequestId) {
+        return;
+      }
+
+      _spotifySearchResults = songs;
+      _lastSearchError = null;
+
+      if (songs.isNotEmpty &&
+          (_selectedSong == null ||
+              !songs.any((song) => song.id == _selectedSong!.id))) {
+        _selectedSong = songs.first;
+      }
+    } catch (error) {
+      if (requestId != _searchRequestId) {
+        return;
+      }
+      _spotifySearchResults = const <Song>[];
+      _lastSearchError = _errorMessage(error);
+    } finally {
+      if (requestId == _searchRequestId) {
+        _isSearching = false;
+        notifyListeners();
+      }
+    }
   }
 
   void selectSong(Song song) {
@@ -389,6 +463,7 @@ class Sprint1Controller extends ChangeNotifier {
   @override
   void dispose() {
     _playbackTimer?.cancel();
+    _searchDebounce?.cancel();
     super.dispose();
   }
 
