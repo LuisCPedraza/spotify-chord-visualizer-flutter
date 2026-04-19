@@ -55,4 +55,4 @@ jobs:
         run: flutter test --no-pub
 
       - name: Integration Test
-        run: flutter test integration_test/app_flow_test.dart --no-pub --reporter=expanded
+        run: flutter test -d linux integration_test/app_flow_test.dart --no-pub --reporter=expanded
