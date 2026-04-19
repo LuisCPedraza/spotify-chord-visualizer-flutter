@@ -55,49 +55,49 @@ class SpotifyAuthService implements SpotifyAuthGateway {
        _storage = storage ?? const FlutterSecureStorage(),
        clientId = clientId ?? _loadClientId(),
        redirectUri = redirectUri ?? _loadRedirectUri(),
-       scopes = List.unmodifiable(scopes ?? _defaultScopes) {
-    // Validación de credenciales
-    if (this.clientId.isEmpty) {
-      throw StateError(
-        'SPOTIFY_CLIENT_ID no configurado. '
-        'Verifica que .env exista en la raíz del proyecto con:\n'
-        '  SPOTIFY_CLIENT_ID=tu_client_id_aqui\n'
-        'O define la variable de entorno SPOTIFY_CLIENT_ID.',
-      );
-    }
-    if (this.redirectUri == _defaultRedirectUri) {
-      // Está bien, es el valor por defecto
-    }
-  }
+       scopes = List.unmodifiable(scopes ?? _defaultScopes);
+
+  // Getter para verificar si las credenciales están configuradas
+  bool get isConfigured => clientId.isNotEmpty;
 
   static String _loadClientId() {
     try {
       if (dotenv.isInitialized) {
         final value = dotenv.env['SPOTIFY_CLIENT_ID'];
-        if (value != null && value.isNotEmpty) return value;
+        if (value != null && value.isNotEmpty) {
+          return value;
+        }
       }
-    } catch (_) {
-      // dotenv no inicializado
+    } catch (e) {
+      // dotenv no inicializado o error al acceder
     }
-    return const String.fromEnvironment(
+    
+    // Fallback a String.fromEnvironment
+    final envValue = const String.fromEnvironment(
       'SPOTIFY_CLIENT_ID',
       defaultValue: '',
     );
+    return envValue;
   }
 
   static String _loadRedirectUri() {
     try {
       if (dotenv.isInitialized) {
         final value = dotenv.env['SPOTIFY_REDIRECT_URI'];
-        if (value != null && value.isNotEmpty) return value;
+        if (value != null && value.isNotEmpty) {
+          return value;
+        }
       }
-    } catch (_) {
-      // dotenv no inicializado
+    } catch (e) {
+      // dotenv no inicializado o error al acceder
     }
-    return const String.fromEnvironment(
+    
+    // Fallback a String.fromEnvironment o default
+    final envValue = const String.fromEnvironment(
       'SPOTIFY_REDIRECT_URI',
-      defaultValue: _defaultRedirectUri,
+      defaultValue: '',
     );
+    return envValue.isNotEmpty ? envValue : _defaultRedirectUri;
   }
 
   @override
