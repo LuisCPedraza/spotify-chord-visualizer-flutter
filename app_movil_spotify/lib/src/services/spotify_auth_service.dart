@@ -21,7 +21,7 @@ abstract class SpotifyAuthGateway {
 
 class SpotifyAuthService implements SpotifyAuthGateway {
   static const String _defaultRedirectUri =
-      'com.example.app_movil_spotify://spotify-auth';
+  'com.example.appmovilspotify://spotify-auth';
   static const List<String> _defaultScopes = <String>[
     'user-read-email',
     'user-read-private',
@@ -54,7 +54,10 @@ class SpotifyAuthService implements SpotifyAuthGateway {
   }) : _client = client ?? http.Client(),
        _storage = storage ?? const FlutterSecureStorage(),
        clientId = clientId ?? _loadClientId(),
-       redirectUri = redirectUri ?? _loadRedirectUri(),
+       redirectUri =
+           redirectUri == null
+               ? _loadRedirectUri()
+               : _normalizeRedirectUri(redirectUri),
        scopes = List.unmodifiable(scopes ?? _defaultScopes);
 
   // Getter para verificar si las credenciales están configuradas
@@ -85,7 +88,7 @@ class SpotifyAuthService implements SpotifyAuthGateway {
       if (dotenv.isInitialized) {
         final value = dotenv.env['SPOTIFY_REDIRECT_URI'];
         if (value != null && value.isNotEmpty) {
-          return value;
+          return _normalizeRedirectUri(value);
         }
       }
     } catch (e) {
@@ -97,7 +100,35 @@ class SpotifyAuthService implements SpotifyAuthGateway {
       'SPOTIFY_REDIRECT_URI',
       defaultValue: '',
     );
-    return envValue.isNotEmpty ? envValue : _defaultRedirectUri;
+    if (envValue.isEmpty) {
+      return _defaultRedirectUri;
+    }
+    return _normalizeRedirectUri(envValue);
+  }
+
+  static String _normalizeRedirectUri(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) {
+      return _defaultRedirectUri;
+    }
+
+    final separatorIndex = trimmed.indexOf('://');
+    if (separatorIndex <= 0) {
+      return _defaultRedirectUri;
+    }
+
+    final rawScheme = trimmed.substring(0, separatorIndex);
+    final rest = trimmed.substring(separatorIndex);
+    final normalizedScheme = rawScheme.replaceAll(
+      RegExp(r'[^a-zA-Z0-9+.-]'),
+      '',
+    );
+
+    if (normalizedScheme.isEmpty) {
+      return _defaultRedirectUri;
+    }
+
+    return '$normalizedScheme$rest';
   }
 
   @override

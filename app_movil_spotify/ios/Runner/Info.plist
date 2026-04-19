@@ -74,10 +74,10 @@
 	<array>
 		<dict>
 			<key>CFBundleURLName</key>
-			<string>com.example.app_movil_spotify.spotify-auth</string>
+			<string>com.example.appmovilspotify.spotify-auth</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>com.example.app_movil_spotify</string>
+				<string>com.example.appmovilspotify</string>
 			</array>
 		</dict>
 	</array>

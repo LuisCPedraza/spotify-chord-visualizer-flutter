@@ -32,20 +32,18 @@ dependencies:
     sdk: flutter
 
   # Spotify SDK
-  spotify_sdk: ^2.3.0+1
-  flutter_web_auth_2: ^3.1.2
+  flutter_web_auth_2: ^5.0.2
   crypto: ^3.0.6
-  flutter_dotenv: ^5.1.0
+  flutter_dotenv: ^6.0.0
   
   # Audio Processing
-  flutter_sound: ^9.2.13
-  tflite_flutter: ^0.10.4
-  permission_handler: ^11.3.1
+  tflite_flutter: ^0.12.1
+  permission_handler: ^12.0.1
   
   # Utils
   http: ^1.2.2
   url_launcher: ^6.3.0
-  flutter_secure_storage: ^9.2.2
+  flutter_secure_storage: ^10.0.0
   provider: ^6.1.2
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -77,8 +75,10 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
+  # Nota: En Flutter Web, los archivos .env no se cargan automáticamente
+  # Se recomienda pasar credenciales con --dart-define en flutter run
   assets:
-    - .env
+    - .env  # Solo se usa en Android/iOS. En web, usar --dart-define
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
